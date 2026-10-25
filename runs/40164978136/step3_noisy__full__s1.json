@@ -1,1 +1,1 @@
-{"name":"step3_noisy__full__s1","step":"step3_noisy","config":"full","seed":1,"hint":0.5,"noise":0.1,"wrong":0.2,"phase":"starting","t":1792905881}
+{"name":"step3_noisy__full__s1","step":"step3_noisy","config":"full","seed":1,"hint":0.5,"noise":0.1,"wrong":0.2,"phase":"play","done":29,"total":60,"recent":0.6,"success_total":15,"calls":37,"lessons":10,"stages":2,"curve":[1,0,1,0,1,0,0,0,0,0,1,1,1,1,0,1,0,1,1,1,1,1,0,0,0,0,1,1,0],"t":1792905927}
