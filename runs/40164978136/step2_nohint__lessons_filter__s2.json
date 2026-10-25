@@ -1,1 +1,1 @@
-{"name":"step2_nohint__lessons_filter__s2","step":"step2_nohint","config":"lessons_filter","seed":2,"hint":0,"noise":0,"wrong":0,"phase":"starting","t":1792905508}
+{"name":"step2_nohint__lessons_filter__s2","step":"step2_nohint","config":"lessons_filter","seed":2,"hint":0,"noise":0,"wrong":0,"phase":"play","done":35,"total":60,"recent":0.55,"success_total":20,"calls":51,"lessons":7,"stages":2,"curve":[1,1,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,1,1,0,1,1,1,1,1,1,0],"t":1792905560}
