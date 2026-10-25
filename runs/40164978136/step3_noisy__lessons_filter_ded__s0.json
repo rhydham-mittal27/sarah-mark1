@@ -1,1 +1,1 @@
-{"name":"step3_noisy__lessons_filter_ded__s0","step":"step3_noisy","config":"lessons_filter_ded","seed":0,"hint":0.5,"noise":0.1,"wrong":0.2,"phase":"starting","t":1792905859}
+{"name":"step3_noisy__lessons_filter_ded__s0","step":"step3_noisy","config":"lessons_filter_ded","seed":0,"hint":0.5,"noise":0.1,"wrong":0.2,"phase":"play","done":40,"total":60,"recent":0.55,"success_total":25,"calls":48,"lessons":11,"stages":2,"curve":[1,0,1,1,0,0,1,1,1,1,0,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0],"t":1792905911}
