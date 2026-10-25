@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sarah Mark 1 · X-Ray</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/shared/hud.css">
+<style>
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:3px 0 6px}
+.chip{font-family:var(--mono);font-size:11.5px;padding:2px 7px;border:1px solid rgba(0,229,255,.45);color:var(--cyan);position:relative;background:rgba(0,229,255,.06)}
+.chip.rm{text-decoration:line-through;color:var(--muted);border-color:rgba(255,59,59,.5);background:rgba(255,59,59,.07)}
+.chip.pick{border-color:var(--gold);color:var(--gold);box-shadow:0 0 8px rgba(255,179,0,.6);background:rgba(255,179,0,.1)}
+.chip.truth{outline:1.5px dashed var(--red);outline-offset:1px}
+.chip .bar{display:block;height:3px;background:var(--green);margin-top:2px}
+.row{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:start;border-bottom:1px solid rgba(0,229,255,.1);padding:3px 0}
+.row>b{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding-top:5px}
+pre.pr{margin:0;white-space:pre-wrap;font-family:var(--mono);font-size:10.5px;color:#8fe9ff;background:rgba(0,8,16,.7);border:1px solid rgba(0,229,255,.18);padding:5px 7px;max-height:96px;overflow:auto}
+.ok{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--gold)}
+.hist{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px}
+.hist i{width:11px;height:11px;border:1px solid rgba(0,229,255,.4);cursor:pointer;display:block}
+.hist i.s{background:rgba(61,255,160,.7)}.hist i.f{background:rgba(255,59,59,.7)}.hist i.sel{outline:2px solid var(--gold)}
+.lrow{display:grid;grid-template-columns:1fr 60px 44px;gap:6px;align-items:center;font-size:12.5px;border-bottom:1px solid rgba(0,229,255,.08);padding:2px 0}
+.lbar{height:6px;background:rgba(0,229,255,.15)}.lbar i{display:block;height:100%}
+.ev{font-family:var(--mono);font-size:11px;line-height:1.5;border-left:2px solid transparent;padding-left:5px}
+.ev.decide{border-color:var(--cyan)}.ev.outcome{border-color:var(--gold)}.ev.reflect,.ev.lesson{border-color:var(--violet)}.ev.sleep,.ev.unlock{border-color:var(--green)}.ev.error{border-color:var(--red);color:var(--red)}
+.toggle{display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(0,229,255,.25);padding:6px 9px;margin:4px 0;font-family:var(--mono);font-size:12px}
+.topctl{flex:none;padding:6px 10px}
+.topctl .ctl{margin:0;gap:8px 14px}
+input[type=text],input[type=number]{background:rgba(0,229,255,.07);border:1px solid var(--line);color:var(--cyan);font-family:var(--mono);font-size:12px;padding:4px 6px;width:96px}
+</style></head><body class="dash"><div class="wrap">
+<header class="top">
+  <div class="reactor"><i></i><i></i><i></i><b></b></div>
+  <div><h1>Sarah Mark 1 // X-Ray</h1><div class="sub">LIVE VIEW INSIDE A MODULAR SOFTWARE CHILD-BRAIN · MEMORY · REFLECTION · IMAGINATION · CURIOSITY</div></div>
+  <div class="meta"><span id="status">connecting…</span><br>tick <b id="tick">0</b> · LLM calls <b id="calls">0</b></div>
+</header>
+<section class="panel topctl"><div class="ctl">
+  <button id="bRun" class="gold">▶ RUN</button><button id="bStep">⏭ STEP</button><button id="bReset">↺ RESET</button>
+  <label>Speed <b id="spdv">3</b>/s<input id="spd" type="range" min="0.2" max="30" step="0.2" value="3" style="width:90px"></label>
+  <label>Seed <input id="seed" type="number" value="0" style="width:56px"></label>
+  <label>Config <select id="cfgSel"></select></label>
+  <label>LLM <select id="llmSel"><option value="stub">stub (instant · Ollama untouched)</option><option value="ollama">ollama (real model · shares server)</option></select></label>
+  <label>Model <input id="model" type="text" value="llama3.2:1b"></label>
+  <label><input type="checkbox" id="truth"> reveal hidden rules</label>
+</div></section>
+
+<main class="cols" style="grid-template-columns:minmax(0,1.15fr) minmax(0,.9fr) minmax(0,1fr)">
+  <section class="panel col">
+    <h2>Brain circuit <small>nodes light up as data flows</small></h2>
+    <div class="cvbox" style="flex:.9"><canvas id="circuit"></canvas></div>
+    <h2 style="margin-top:6px">Decision X-ray <small id="decTitle">—</small></h2>
+    <div class="hist" id="hist"></div>
+    <div id="xr" style="flex:1;min-height:0;overflow:auto"></div>
+  </section>
+
+  <section class="panel col">
+    <h2>Event stream <small>every internal signal</small></h2>
+    <div class="console" id="log" style="flex:1.1;height:auto"></div>
+    <div class="stats" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat"><span>Recent success</span><b id="sSucc">—</b></div><div class="stat"><span>Lessons</span><b id="sLes">—</b></div>
+      <div class="stat"><span>Lesson precision</span><b id="sPrec">—</b></div><div class="stat"><span>Stages</span><b id="sStage">—</b></div></div>
+    <h2 style="margin-top:6px">Learning curve <small>rolling success (20)</small></h2>
+    <div class="cvbox" style="flex:.7"><canvas id="curve"></canvas></div>
+  </section>
+
+  <section class="panel col" id="tabsroot">
+    <div class="tabs"><button data-tab="les">LESSONS</button><button data-tab="wm">WORLD MODEL</button><button data-tab="skl">SKILLS</button><button data-tab="cur">CURRICULUM</button><button data-tab="mod">MODULES</button></div>
+    <div class="pane" data-pane="les"><p class="note">Learned “avoid action when property” rules. Bar = confidence (support vs contradiction). With hidden rules revealed: <span class="ok">green = true rule</span>, <span class="bad">red = wrong lesson</span>.</p><div id="lessons" style="overflow:auto"></div></div>
+    <div class="pane" data-pane="wm"><div class="ctl" style="margin:0 0 6px"><label>Stage <select id="wmDom"></select></label><span class="mini">predicted success per action × property (grey = never tried)</span></div><div class="cvbox" style="flex:1"><canvas id="wmcv"></canvas></div></div>
+    <div class="pane" data-pane="skl"><p class="note">Whole-object skills the library has stored (successful action per property pair).</p><div id="skills" style="overflow:auto"></div></div>
+    <div class="pane" data-pane="cur"><div id="curr" style="overflow:auto"></div></div>
+    <div class="pane" data-pane="mod"><p class="note">Switch modules on/off <b>while it runs</b> and watch the circuit and the learning curve react.</p><div id="mods"></div></div>
+  </section>
+</main>
+</div>
+<script src="/shared/hud.js"></script><script src="/app.js"></script>
+</body></html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sarah Mark 1 · Live Run Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04101a;--cy:#00e5ff;--gold:#ffb300;--red:#ff3b3b;--grn:#3dffa0;--vio:#b38cff;--mut:#6f93a5;--txt:#cfeffa;--line:rgba(0,229,255,.28);--mono:'Share Tech Mono',monospace}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:radial-gradient(1200px 700px at 70% -10%,#0a2a3d 0,#04101a 60%) fixed;color:var(--txt);font:15px/1.35 Rajdhani,sans-serif;display:flex;flex-direction:column;padding:10px 14px;gap:8px;overflow:hidden}
+h1{font:700 22px Orbitron;letter-spacing:.12em;margin:0;color:var(--cy);text-shadow:0 0 14px rgba(0,229,255,.6)}
+.top{display:flex;align-items:center;gap:14px;flex:none}.sub{font:11px var(--mono);color:var(--mut);letter-spacing:.1em}
+.meta{margin-left:auto;text-align:right;font:12px var(--mono);color:var(--mut)}.meta b{color:var(--gold)}
+.panel{border:1px solid var(--line);background:rgba(4,22,34,.7);padding:8px 10px;position:relative;min-height:0}
+.panel:before{content:"";position:absolute;left:-1px;top:-1px;width:12px;height:12px;border-left:2px solid var(--cy);border-top:2px solid var(--cy)}
+h2{font:500 12px Orbitron;letter-spacing:.16em;color:var(--cy);margin:0 0 6px;text-transform:uppercase}h2 small{font:11px var(--mono);color:var(--mut);letter-spacing:0;margin-left:8px;text-transform:none}
+.overall{flex:none;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.bar{height:12px;background:rgba(0,229,255,.12);border:1px solid var(--line);position:relative;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#007c92,var(--cy));box-shadow:0 0 12px var(--cy);transition:width .8s}
+.kp{display:flex;gap:18px;font:12px var(--mono);color:var(--mut)}.kp b{display:block;font:700 22px Orbitron;color:var(--cy)}
+.main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.25fr);gap:10px}
+.col{display:flex;flex-direction:column;gap:8px;min-height:0}.col>.panel{flex:1;overflow:auto}
+.tabs{display:flex;gap:4px;margin-bottom:6px}.tabs button{background:none;border:1px solid var(--line);color:var(--mut);font:11px Orbitron;letter-spacing:.1em;padding:4px 9px;cursor:pointer}.tabs button.on{color:var(--gold);border-color:var(--gold);box-shadow:0 0 8px rgba(255,179,0,.4)}
+table{border-collapse:collapse;width:100%;font:13px var(--mono)}th{color:var(--mut);font-weight:400;text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 6px}td{padding:4px 6px;border-top:1px solid rgba(0,229,255,.1)}
+td.n{color:var(--mut)}.v{display:flex;align-items:center;gap:6px}.v i{display:block;height:7px;background:var(--cy);box-shadow:0 0 6px var(--cy)}.v.g i{background:var(--grn);box-shadow:0 0 6px var(--grn)}.v.r i{background:var(--red);box-shadow:0 0 6px var(--red)}.v span{min-width:48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:7px}
+.job{border:1px solid var(--line);padding:5px 7px;background:rgba(0,229,255,.04);font:11px var(--mono)}
+.job.run{border-color:var(--gold);box-shadow:0 0 8px rgba(255,179,0,.25)}.job.done{border-color:rgba(61,255,160,.55)}.job.error{border-color:var(--red)}.job.wait{opacity:.5}
+.job b{color:var(--txt);font-weight:400;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.job .st{color:var(--mut);display:flex;justify-content:space-between}
+.job .pb{height:5px;background:rgba(0,229,255,.12);margin:4px 0}.job .pb i{display:block;height:100%;background:var(--gold)}.job.done .pb i{background:var(--grn)}.job.error .pb i{background:var(--red)}
+canvas.sp{width:100%;height:22px;display:block}
+.legend{font:11px var(--mono);color:var(--mut);margin-top:6px}.err{color:var(--red);font:12px var(--mono)}
+a{color:var(--cy)}
+@media(max-width:900px){body{overflow:auto}.main{grid-template-columns:1fr}.col>.panel{overflow:visible}}
+</style></head><body>
+<div class="top"><div><h1>SARAH MARK 1 // LIVE RUN</h1><div class="sub">REAL llama3.2:1b · ONE GITHUB-ACTIONS JOB PER CONFIG × SEED · PROGRESS PUSHED EVERY ~45 s</div></div>
+<div class="meta"><span id="conn">connecting…</span><br>data age <b id="age">–</b> · <a id="runlink" href="#" target="_blank">actions run</a> · <a id="replink" href="#" target="_blank">final report</a></div></div>
+<div class="panel overall"><div><h2>Overall <small id="ov"></small></h2><div class="bar"><i id="ovbar" style="width:0"></i></div></div>
+<div class="kp"><div><b id="kDone">0</b>finished</div><div><b id="kRun">0</b>running</div><div><b id="kErr">0</b>errors</div><div><b id="kEta">–</b>eta</div></div></div>
+<div class="main">
+<div class="col"><div class="panel"><div class="tabs" id="tabs"></div><h2>Live results <small>mean ± sd over finished seeds · partial = running jobs</small></h2><div id="tbl"></div>
+<div class="legend">play = success during free play · exam = unseen property combinations · composite = two-step tasks · repeat = repeated-mistake rate (lower is better)</div></div></div>
+<div class="col"><div class="panel"><h2>Jobs <small id="jobsub"></small></h2><div class="grid" id="grid"></div></div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+let repo=q.get("repo");if(!repo){const m=location.hostname.match(/^(.+)\.github\.io$/);const seg=location.pathname.split("/")[1];if(m&&seg)repo=m[1]+"/"+seg}
+repo=repo||"OWNER/sarah-mark1";
+const RAW=q.get("data")||`https://raw.githubusercontent.com/${repo}/bench-data/`;
+let S=null,step=null,tabsBuilt="";
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length,sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))};
+const fmt=(a,d=2)=>a.length?mean(a).toFixed(d)+(a.length>1?"±"+sd(a).toFixed(d):""):"–";
+function bar(vals,cls){if(!vals.length)return "<span>–</span>";const m=mean(vals);return `<div class="v ${cls||""}"><span>${fmt(vals)}</span><i style="width:${Math.round(m*90)}px"></i></div>`}
+function pct(j){if(j.phase==="done")return 1;if(j.phase==="error")return 1;if(j.phase==="play")return .85*(j.done/j.total);if(j.phase==="exam")return .85+.15*((j.exam_step||0)/(j.exam_steps||6));return 0}
+function spark(cv,curve){if(!cv||!curve||curve.length<3)return;const w=cv.clientWidth*2,h=44;cv.width=w;cv.height=h;const g=cv.getContext("2d");g.clearRect(0,0,w,h);const k=10,ys=curve.map((_,i)=>{const s=curve.slice(Math.max(0,i-k+1),i+1);return mean(s)});g.strokeStyle="#ffb300";g.lineWidth=2;g.beginPath();ys.forEach((y,i)=>{const X=i/(ys.length-1)*(w-2)+1,Y=h-3-y*(h-6);i?g.lineTo(X,Y):g.moveTo(X,Y)});g.stroke()}
+function render(){if(!S)return;const J=S.jobs,byName={};J.forEach(j=>byName[j.name]=j);
+  const done=J.filter(j=>j.phase==="done").length,err=J.filter(j=>j.phase==="error").length,run=J.filter(j=>!["done","error"].includes(j.phase)).length;
+  const frac=J.reduce((a,j)=>a+pct(j),0)/S.total;$("ovbar").style.width=(frac*100)+"%";$("ov").textContent=`${(frac*100).toFixed(1)}% of ${S.total} jobs`;
+  $("kDone").textContent=done;$("kRun").textContent=run;$("kErr").textContent=err;
+  const el=(S.updated-S.started);$("kEta").textContent=frac>.02?fmtT(el/frac*(1-frac)):"–";
+  const steps=[...new Set(J.map(j=>j.step))];const key=steps.join();if(tabsBuilt!==key){tabsBuilt=key;$("tabs").innerHTML=steps.map(s=>`<button data-s="${s}">${s.replace("_"," ")}</button>`).join("");$("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{step=b.dataset.s;render()});if(!step||!steps.includes(step))step=steps[0]}
+  $("tabs").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===step));
+  const cfgs=[...new Set(J.filter(j=>j.step===step).map(j=>j.config))];
+  $("tbl").innerHTML="<table><tr><th>config</th><th>n</th><th>play</th><th>exam</th><th>composite</th><th>repeat↓</th><th>lessons</th></tr>"+cfgs.map(c=>{
+    const fin=J.filter(j=>j.step===step&&j.config===c&&j.phase==="done").map(j=>j.result),live=J.filter(j=>j.step===step&&j.config===c&&j.phase==="play");
+    const play=fin.length?fin.map(r=>r.play_success):live.map(j=>j.recent);
+    return `<tr><td>${c}</td><td class="n">${fin.length}${live.length?"+"+live.length:""}</td><td>${bar(play)}${fin.length?"":"<small style='color:var(--mut)'> partial</small>"}</td><td>${bar(fin.map(r=>r.exam_mean),"g")}</td><td>${bar(fin.map(r=>r.exam_compose),"g")}</td><td>${bar(fin.map(r=>r.repeated_mistake_rate),"r")}</td><td class="n">${fin.length?fmt(fin.map(r=>r.lessons),0):"–"}</td></tr>`}).join("")+"</table>";
+  const all=S.expected||[];const names=new Set(J.map(j=>j.name));
+  $("jobsub").textContent=`${J.length} reporting of ${S.total}`;
+  const sorted=J.slice().sort((a,b)=>(a.step+a.config+a.seed).localeCompare(b.step+b.config+b.seed));
+  $("grid").innerHTML=sorted.map(j=>{const cl=j.phase==="done"?"done":j.phase==="error"?"error":j.phase==="starting"?"wait":"run";const st=j.phase==="play"?`play ${j.done}/${j.total}`:j.phase==="exam"?`exam ${j.exam_domain||""}`:j.phase;
+    const extra=j.phase==="done"&&j.result?`exam ${j.result.exam_mean.toFixed(2)} · rep ${j.result.repeated_mistake_rate.toFixed(2)}`:j.phase==="play"?`recent ${(j.recent*100|0)}% · ${j.calls} calls`:"";
+    return `<div class="job ${cl}"><b title="${j.name}">${j.config} · s${j.seed}</b><div class="st"><span>${j.step.replace("step","S").split("_")[0]}</span><span>${st}</span></div><div class="pb"><i style="width:${pct(j)*100}%"></i></div><div class="st"><span>${extra}</span></div><canvas class="sp" data-n="${j.name}"></canvas></div>`}).join("");
+  document.querySelectorAll("canvas.sp").forEach(c=>spark(c,(byName[c.dataset.n]||{}).curve))}
+function fmtT(s){s=Math.max(0,s|0);return s>3600?(s/3600).toFixed(1)+"h":Math.ceil(s/60)+"m"}
+async function poll(){try{const r=await fetch(RAW+"summary.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error(r.status);S=await r.json();$("conn").innerHTML="<span style='color:var(--grn)'>● LIVE</span>";
+  $("runlink").href=`https://github.com/${repo}/actions/runs/${S.run_id}`;$("replink").href=`https://github.com/${repo}/blob/bench-data/reports/latest.md`;
+  $("age").textContent=fmtT(Date.now()/1000-S.updated)+" ago";render()}catch(e){$("conn").innerHTML=`<span class="err">waiting for data (${e.message}) · repo ${repo}</span>`}}
+poll();setInterval(poll,20000);setInterval(()=>{if(S)$("age").textContent=fmtT(Date.now()/1000-S.updated)+" ago"},5000);window.addEventListener("resize",render);
+</script></body></html>

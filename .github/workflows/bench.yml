@@ -1,0 +1,135 @@
+name: sarah-bench
+
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: "Which experiments (1=baseline, 2=no hints, 3=noisy world), comma separated"
+        default: "1,2,3"
+      seeds:
+        description: "Seeds per config"
+        default: "3"
+      play:
+        description: "Free-play tasks"
+        default: "60"
+      exam:
+        description: "Exam tasks per domain"
+        default: "15"
+
+permissions:
+  contents: write
+
+env:
+  MODEL: llama3.2:1b
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.p.outputs.matrix }}
+      total: ${{ steps.p.outputs.total }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          M=$(python scripts/plan.py "${{ inputs.steps }}" "${{ inputs.seeds }}")
+          echo "matrix=$M" >> "$GITHUB_OUTPUT"
+          echo "total=$(echo "$M" | python -c 'import json,sys;print(len(json.load(sys.stdin)["include"]))')" >> "$GITHUB_OUTPUT"
+      - name: make sure the bench-data branch exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git ls-remote --exit-code --heads origin bench-data >/dev/null 2>&1; then
+            git checkout --orphan bench-data
+            git rm -rf . >/dev/null 2>&1 || true
+            echo "live data for the monitor" > README.md
+            git -c user.email=actions@github.com -c user.name=sarah-bench add README.md
+            git -c user.email=actions@github.com -c user.name=sarah-bench commit -m "init data branch"
+            git push origin bench-data
+          fi
+
+  hub:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - name: aggregate live progress every 30 s
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/hub.py "${{ github.run_id }}" "${{ needs.plan.outputs.total }}"
+
+  bench:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: cache model
+        uses: actions/cache@v4
+        with:
+          path: ~/ollama-models
+          key: ollama-${{ env.MODEL }}-v1
+
+      - name: start ollama (real model, CPU)
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          export OLLAMA_MODELS="$HOME/ollama-models" OLLAMA_NUM_PARALLEL=1 OLLAMA_KEEP_ALIVE=30m
+          nohup ollama serve > ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -s localhost:11434/api/tags >/dev/null && break; sleep 1; done
+          ollama pull "$MODEL"
+          ollama run "$MODEL" "say ok" --keepalive 30m
+
+      - name: run benchmark (with live progress upload)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p out
+          META='{"step":"${{ matrix.step }}","config":"${{ matrix.config }}","seed":${{ matrix.seed }},"hint":${{ matrix.hint }},"noise":${{ matrix.noise }},"wrong":${{ matrix.wrong }}}'
+          python scripts/uploader.py out/progress.json "${{ github.run_id }}" "${{ matrix.name }}" "$META" &
+          UP=$!
+          set +e
+          python -X utf8 -u run.py --configs ${{ matrix.config }} --seeds 1 --seed-start ${{ matrix.seed }} \
+            --play ${{ inputs.play }} --exam ${{ inputs.exam }} \
+            --hint ${{ matrix.hint }} --noise ${{ matrix.noise }} --wrong-hint ${{ matrix.wrong }} \
+            --progress out/progress.json --out out/result.json
+          RC=$?
+          if [ $RC -ne 0 ]; then echo '{"phase":"error"}' > out/progress.json; fi
+          touch out/progress.json.stop
+          wait $UP
+          exit $RC
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.name }}
+          path: out/result.json
+          if-no-files-found: ignore
+
+  report:
+    needs: [plan, bench]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: merge results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/report.py artifacts report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+          python scripts/ghdata.py report.md "reports/${{ github.run_id }}.md"
+          python scripts/ghdata.py report.md "reports/latest.md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: REPORT
+          path: report.md
