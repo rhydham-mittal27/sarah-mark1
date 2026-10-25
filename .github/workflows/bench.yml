@@ -109,10 +109,16 @@ jobs:
           python scripts/uploader.py out/progress.json "${{ github.run_id }}" "${{ matrix.name }}" "$META" &
           UP=$!
           set +e
-          python -X utf8 -u run.py --configs ${{ matrix.config }} --seeds 1 --seed-start ${{ matrix.seed }} \
-            --play ${{ inputs.play }} --exam ${{ inputs.exam }} \
-            --hint ${{ matrix.hint }} --noise ${{ matrix.noise }} --wrong-hint ${{ matrix.wrong }} \
-            --progress out/progress.json --out out/result.json
+          if [ "${{ matrix.kind }}" = "tw" ]; then
+            python -X utf8 -u tw_run.py --mode ${{ matrix.config }} --seed ${{ matrix.seed }} \
+              --train ${{ inputs.tw_games }} --eval ${{ inputs.tw_games }} \
+              --progress out/progress.json --out out/result.json
+          else
+            python -X utf8 -u run.py --configs ${{ matrix.config }} --seeds 1 --seed-start ${{ matrix.seed }} \
+              --play ${{ inputs.play }} --exam ${{ inputs.exam }} \
+              --hint ${{ matrix.hint }} --noise ${{ matrix.noise }} --wrong-hint ${{ matrix.wrong }} \
+              --progress out/progress.json --out out/result.json
+          fi
           RC=$?
           if [ $RC -ne 0 ]; then echo '{"phase":"error"}' > out/progress.json; fi
           touch out/progress.json.stop
