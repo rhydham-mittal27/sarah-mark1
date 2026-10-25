@@ -1,1 +1,1 @@
-{"name":"step1_baseline__lessons_in_prompt__s2","step":"step1_baseline","config":"lessons_in_prompt","seed":2,"hint":0.75,"noise":0,"wrong":0,"phase":"starting","t":1792905518}
+{"name":"step1_baseline__lessons_in_prompt__s2","step":"step1_baseline","config":"lessons_in_prompt","seed":2,"hint":0.75,"noise":0,"wrong":0,"phase":"play","done":37,"total":60,"recent":0.35,"success_total":17,"calls":44,"lessons":10,"stages":2,"curve":[1,1,0,0,0,1,0,1,0,1,1,0,0,1,1,1,1,0,1,1,1,0,0,1,0,0,0,0,1,1,0,0,0,1,0,0,0],"t":1792905564}
