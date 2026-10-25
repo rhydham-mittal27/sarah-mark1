@@ -6,6 +6,7 @@ evaluate on M held-out games (seeds B).  The LLM picks among numbered commands t
 Modes (all use the same LLM; they differ in what the surrounding code does):
   bare        objective + room + last steps -> LLM picks
   prompt_mem  + what earlier games taught (which verbs scored / never scored) written into the prompt
+  norepeat    ablation: ONLY the generic rule 'never repeat a command in the same room' enforced in code, nothing learned
   filter      the same knowledge ENFORCED in code: drop commands already tried in this room and verbs that never scored
   full        filter + value ranking (learned verb success rate with optimism for untried verbs, shortlist of the best k) before the LLM
 """
@@ -15,7 +16,7 @@ import re
 import tempfile
 from collections import defaultdict
 
-MODES = ("bare", "prompt_mem", "filter", "full")
+MODES = ("bare", "prompt_mem", "norepeat", "filter", "full")
 MAX_OPTIONS = 20
 NO_VALUE_VERBS = {"examine", "look", "inventory"}
 
@@ -55,6 +56,7 @@ class TWAgent:
         self.rng = random.Random(seed + 777)
         self.tries, self.hits = defaultdict(int), defaultdict(int)      # per verb, across games
         self.stats = dict(steps=0, llm_calls=0, invalid=0, repeats=0, removed=0)
+        self.trace = []            # first decisions of the evaluation phase (prompt, raw reply, choice) for debugging
 
     # ------------------------------------------------------------------ knowledge
     def verb_rate(self, v):
@@ -80,8 +82,8 @@ class TWAgent:
     def decide(self, state, history, tried_here):
         cmds = [c for c in state.admissible_commands if c not in ("look", "inventory")] or list(state.admissible_commands)
         pool, removed = cmds, 0
-        if self.mode in ("filter", "full"):
-            dead = self.dead_verbs()
+        if self.mode in ("norepeat", "filter", "full"):
+            dead = self.dead_verbs() if self.mode != "norepeat" else set()
             keep = [c for c in pool if c not in tried_here and verb(c) not in dead]
             keep = keep or [c for c in pool if c not in tried_here] or pool
             removed, pool = len(pool) - len(keep), keep
@@ -103,6 +105,8 @@ class TWAgent:
         if not (0 <= i < len(pool)):
             self.stats["invalid"] += 1
             i = self.rng.randrange(len(pool))
+        if getattr(self, "tracing", False) and len(self.trace) < 40:
+            self.trace.append(dict(prompt=prompt, raw=raw, parsed=i + 1 if m else None, choice=pool[i]))
         return pool[i], prompt
 
     def prompt(self, state, pool, history):
@@ -157,6 +161,7 @@ def run_mode(mode, seed, games, llm, n_train=8, n_eval=8, max_steps=25, log=prin
             progress(dict(phase="play", done=g + 1, total=total, recent=round(sum(r["score"] / r["max_score"] for r in train[-4:]) / len(train[-4:]), 3), calls=llm.calls, curve=[]))
     for g in range(n_eval):
         env = games.make(10_000 + base + g)
+        ag.tracing = True
         ev.append(ag.play(env, max_steps, learn=False))
         if progress:
             progress(dict(phase="play", done=n_train + g + 1, total=total, recent=round(sum(r["score"] / r["max_score"] for r in ev[-4:]) / len(ev[-4:]), 3), calls=llm.calls, curve=[]))
@@ -164,7 +169,7 @@ def run_mode(mode, seed, games, llm, n_train=8, n_eval=8, max_steps=25, log=prin
     s = ag.stats
     out = dict(config=mode, seed=seed, train_score=m(train, lambda r: r["score"] / r["max_score"]), eval_score=m(ev, lambda r: r["score"] / r["max_score"]),
                eval_win=m(ev, lambda r: float(r["won"])), repeat_rate=s["repeats"] / max(1, s["steps"]), invalid_rate=s["invalid"] / max(1, s["llm_calls"]),
-               llm_calls=llm.calls, removed=s["removed"], lessons=len(ag.good_verbs()), lesson_precision=None, stages=0, good_verbs=ag.good_verbs()[:6], dead_verbs=sorted(ag.dead_verbs()), seconds=round(time.time() - t0, 1))
+               llm_calls=llm.calls, removed=s["removed"], lessons=len(ag.good_verbs()), lesson_precision=None, stages=0, trace=ag.trace[:25], good_verbs=ag.good_verbs()[:6], dead_verbs=sorted(ag.dead_verbs()), seconds=round(time.time() - t0, 1))
     out.update(play_success=out["train_score"], exam_mean=out["eval_score"], exam_compose=out["eval_win"], repeated_mistake_rate=out["repeat_rate"])   # keys the live monitor reads
     log(f"[{mode:10s} seed {seed}] train {out['train_score']:.2f} | EVAL score {out['eval_score']:.2f} win {out['eval_win']:.2f} | repeats {out['repeat_rate']:.2f} | invalid {out['invalid_rate']:.2f} | calls {out['llm_calls']} | good {out['good_verbs']} | {out['seconds']}s")
     return out

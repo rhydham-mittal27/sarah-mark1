@@ -28,7 +28,7 @@ class FakeGames:
 
 class T(unittest.TestCase):
     def test_modes_run_and_learn(self):
-        for mode in ("bare", "prompt_mem", "filter", "full"):
+        for mode in ("bare", "prompt_mem", "norepeat", "filter", "full"):
             r = run_mode(mode, 0, FakeGames(), StubLLM(random.Random(1)), n_train=3, n_eval=3, max_steps=6, log=lambda *a: None)
             self.assertIn("eval_score", r)
         ag = TWAgent("full", StubLLM(), 0)
