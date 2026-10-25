@@ -1,1 +1,1 @@
-{"run_id":"40168346860","total":4,"started":1792908831,"updated":1792908925,"done":0,"jobs":[]}
+{"run_id":"40168346860","total":4,"started":1792908831,"updated":1792908957,"done":0,"jobs":[{"name":"step4_textworld__bare__s0","step":"step4_textworld","config":"bare","seed":0,"hint":0,"noise":0,"wrong":0,"phase":"starting","t":1792908936}]}
