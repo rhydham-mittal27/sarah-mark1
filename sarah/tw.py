@@ -16,7 +16,7 @@ import re
 import tempfile
 from collections import defaultdict
 
-MODES = ("bare", "prompt_mem", "norepeat", "filter", "full")
+MODES = ("bare", "prompt_mem", "norepeat", "filter", "full", "bare_shuf", "prompt_mem_shuf")     # *_shuf: options shown in random order (controls for position bias)
 MAX_OPTIONS = 20
 NO_VALUE_VERBS = {"examine", "look", "inventory"}
 
@@ -52,6 +52,8 @@ def room_of(description):
 class TWAgent:
     def __init__(self, mode, llm, seed=0, k=5):
         assert mode in MODES
+        self.shuffle = mode.endswith("_shuf")
+        mode = mode[:-5] if self.shuffle else mode
         self.mode, self.llm, self.k = mode, llm, k
         self.rng = random.Random(seed + 777)
         self.tries, self.hits = defaultdict(int), defaultdict(int)      # per verb, across games
@@ -97,6 +99,8 @@ class TWAgent:
             pool = self.rng.sample(pool, MAX_OPTIONS)
         if len(pool) == 1:
             return pool[0], None
+        if self.shuffle:
+            pool = self.rng.sample(pool, len(pool))
         prompt = self.prompt(state, pool, history)
         raw = self.llm.generate(prompt, max_tokens=6, seed=self.rng.randrange(10 ** 6))
         self.stats["llm_calls"] += 1

@@ -7,6 +7,7 @@ STEPS = {
     "2": dict(label="step2_nohint", hint=0.0, noise=0.0, wrong=0.0, configs=["bare", "lessons_filter", "lessons_filter_ded", "full", "full_ded"]),
     "3": dict(label="step3_noisy", hint=0.5, noise=0.1, wrong=0.2, configs=["bare", "lessons_filter", "lessons_filter_ded", "full", "full_ded"]),
     "4": dict(label="step4_textworld", kind="tw", hint=0.0, noise=0.0, wrong=0.0, configs=["bare", "prompt_mem", "norepeat", "filter", "full"]),
+    "5": dict(label="step4b_shuffled", kind="tw", hint=0.0, noise=0.0, wrong=0.0, configs=["bare_shuf", "prompt_mem_shuf"]),
 }
 
 steps = [s.strip() for s in sys.argv[1].split(",") if s.strip()]
