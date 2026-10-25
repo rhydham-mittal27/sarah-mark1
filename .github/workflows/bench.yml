@@ -15,6 +15,9 @@ on:
       exam:
         description: "Exam tasks per domain"
         default: "15"
+      tw_games:
+        description: "Step 4 (TextWorld): training games and held-out games per run"
+        default: "8"
 
 permissions:
   contents: write
@@ -85,6 +88,17 @@ jobs:
           for i in $(seq 1 30); do curl -s localhost:11434/api/tags >/dev/null && break; sleep 1; done
           ollama pull "$MODEL"
           ollama run "$MODEL" "say ok" --keepalive 30m
+
+      - uses: actions/setup-python@v5
+        if: matrix.kind == 'tw'
+        with:
+          python-version: "3.11"
+
+      - name: install TextWorld (step 4 only)
+        if: matrix.kind == 'tw'
+        run: |
+          sudo apt-get update && sudo apt-get install -y build-essential libffi-dev python3-dev curl git
+          pip install textworld
 
       - name: run benchmark (with live progress upload)
         env:
